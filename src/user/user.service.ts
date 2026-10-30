@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { User } from './entities/user.entity.js';
@@ -21,30 +21,52 @@ export class UserService {
      const found = this.users.find(element => element?.id === id);
 
     if(found){
-      return  `User id: ${id} found...`
+      return  `User id: ${id} found... ` + JSON.stringify(found);
+     
 
-    };
-    return `This action returns a #${id} user`;
+    } else{
+        return `User id: ${id} not found...`
+      };
+
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    for (let i = 0; i < this.users.length; i++) {
-        const element = this.users[i];
-        
-        const isMatch = Object.keys(updateUserDto).every(keys => {
-          const userKey = keys as keyof UpdateUserDto;
-          return element[userKey] === updateUserDto[userKey];
 
-        })
-        if (isMatch) {
-          return "User found..."
 
-        }
+update(id: number, updateUserDto: UpdateUserDto) {
+  // 1. Find the user by ID
+  const user = this.users.find((u) => u.id === id);
+
+  // 2. If the user doesn't exist, throw a 404 error
+  if (!user) {
+    throw new NotFoundException(`User with ID ${id} not found`);
+  }
+
+  // 3. Update only the fields that were provided
+  if (updateUserDto.name !== undefined) {
+    user.name = updateUserDto.name;
+  }
+  if (updateUserDto.email !== undefined) {
+    user.email = updateUserDto.email;
+  }
+  if (updateUserDto.password !== undefined) {
+    user.password = updateUserDto.password;
+  }
+
+  return {
+    message: "User found and updated successfully...",
+    user,
+  };
 }
-    return `This action updates a #${id} user`;
-  }
 
   remove(id: number) {
-    return `This action removes a #${id} user`;
+    const found = this.users.find(element => element?.id === id);
+
+    if(found){
+      this.users = this.users.filter(element => element?.id !== id);
+      return "User found and removed successfully..."
+    }else{
+      return `User id: ${id} not found...`
+    }
+    
   }
 }
